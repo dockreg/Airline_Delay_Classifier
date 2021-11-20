@@ -1,0 +1,80 @@
+-- Creating HIVE table and populating HIVE table
+
+CREATE TABLE NEW_airline (`date` STRING, carrier STRING, flight_num INT, origin STRING, destination STRING, departure_delay INT, arrival_delay INT, distance INT, carrier_delay INT, weather_delay INT, nas_delay INT, security_delay INT, aircraft_delay INT, total_delay INT )
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+LOAD DATA INPATH '/user/airline_input/graph_analysis.csv'
+OVERWRITE INTO TABLE NEW_airline;
+
+
+-- INSPECTING TABLE
+
+SHOW TABLES;
+
+ANALYZE TABLE airline
+COMPUTE STATISTICS;
+
+DESCRIBE EXTENDED airline;hive
+
+
+-- Analysis
+
+-- Top 5 longest distance flights in 2019
+Select origin, destination, distance
+FROM NEW_airline
+GROUP BY origin, destination, distance
+ORDER BY distance DESC
+LIMIT 10;
+
+-- Most popular flight
+SELECT flight_num, COUNT(flight_num) AS total
+FROM NEW_airline
+GROUP BY flight_num
+ORDER BY total DESC
+LIMIT 1;
+
+-- Most popular route
+SELECT origin, destination, COUNT(flight_num) AS count
+FROM NEW_airline
+GROUP BY origin, destination
+ORDER BY count DESC
+LIMIT 1;
+
+-- Most common carrier used
+SELECT carrier, count(carrier) AS common
+FROM NEW_airline
+GROUP BY carrier
+ORDER BY common DESC
+LIMIT 1;
+
+-- Worst delay type
+SELECT SUM(carrier_delay) AS carrier, SUM(weather_delay) AS weather, SUM(nas_delay) AS nas, SUM(security_delay) AS security, SUM(aircraft_delay) AS aircraft
+FROM NEW_airline;
+
+
+-- What carrier has the worst departing delay
+SELECT carrier, sum(departure_delay) AS delay
+FROM NEW_airline
+GROUP BY carrier
+ORDER BY delay DESC
+LIMIT 10;
+
+SELECT carrier, sum(carrier_delay) AS carrier, sum(weather_delay) AS weather, sum(nas_delay) AS nas,  sum(security_delay) AS security, sum(aircraft_delay) AS aircraft
+FROM NEW_airline
+WHERE carrier == "WN"
+GROUP BY carrier;
+
+
+-- What carrier has the most self-flicted delays
+SELECT carrier, sum(carrier_delay) AS carrierdelay
+FROM NEW_airline
+GROUP BY carrier
+ORDER BY carrierdelay DESC
+LIMIT 10;
+
+-- Worst single departing delay
+SELECT carrier, flight_num, departure_delay
+FROM NEW_airline
+GROUP BY carrier, flight_num, departure_delay
+ORDER BY departure_delay DESC
+LIMIT 1;
